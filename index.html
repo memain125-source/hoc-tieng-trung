@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Học từ vựng tiếng Trung HSK 2</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+  body { max-width: 860px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+  h1 { color: #c0392b; text-align: center; font-size: 24px; }
+  h3 { margin-top: 0; }
+  .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+  textarea { width: 100%; height: 120px; padding: 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; font-family: monospace; }
+  button { padding: 10px 20px; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; margin: 4px; }
+  .btn-primary { background: #c0392b; color: white; }
+  .btn-primary:hover { background: #a93226; }
+  .btn-secondary { background: #3498db; color: white; }
+  .btn-secondary:hover { background: #2980b9; }
+  .btn-ghost { background: #ecf0f1; color: #333; }
+  .btn-ghost:hover { background: #d5dbdb; }
+  .btn-append { background: #16a085; color: white; }
+  .btn-append:hover { background: #138d75; }
+  .btn-toggle { background: #9b59b6; color: white; }
+  .btn-toggle.on { background: #8e44ad; }
+  .btn-next { background: #27ae60; color: white; font-weight: bold; }
+  .btn-next:hover { background: #229954; }
+  .btn-next.highlight { animation: pulse 1s infinite; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(39,174,96,.7); }
+    50% { box-shadow: 0 0 0 8px rgba(39,174,96,0); }
+  }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tabs button { flex: 1; background: #ecf0f1; min-width: 100px; }
+  .tabs button.active { background: #c0392b; color: white; }
+  .hidden { display: none !important; }
+  .question { text-align: center; padding: 20px 0; }
+  .question .prompt { font-size: 40px; margin-bottom: 6px; }
+  .question .sub { font-size: 17px; color: #666; }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .options button { padding: 16px; font-size: 20px; background: white; border: 2px solid #ddd; }
+  .options button:hover { border-color: #c0392b; }
+  .options button.correct { background: #2ecc71; color: white; border-color: #2ecc71; }
+  .options button.wrong { background: #e74c3c; color: white; border-color: #e74c3c; }
+  .stats { display: flex; gap: 12px; justify-content: center; font-size: 15px; flex-wrap: wrap; }
+  .stats span { padding: 6px 12px; background: #ecf0f1; border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
+  th { background: #f8f8f8; }
+  .hint { font-size: 13px; color: #888; margin-top: 6px; }
+  .type-box { display: flex; gap: 8px; margin-top: 16px; }
+  .type-box input { flex: 1; padding: 14px 16px; font-size: 22px; border: 2px solid #ddd; border-radius: 8px; text-align: center; }
+  .type-box input:focus { outline: none; border-color: #c0392b; }
+  .type-box input.correct { border-color: #2ecc71; background: #eafaf1; }
+  .type-box input.wrong { border-color: #e74c3c; background: #fdedec; }
+  .type-box button { padding: 14px 24px; font-size: 16px; }
+  .answer-reveal { margin-top: 12px; font-size: 18px; color: #c0392b; text-align: center; min-height: 24px; }
+  .file-label { display: inline-block; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 15px; color: white; }
+  @media (max-width: 600px) {
+    .options { grid-template-columns: 1fr; }
+    .question .prompt { font-size: 32px; }
+    .type-box { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<h1>📚 Học từ vựng tiếng Trung HSK 2</h1>
+
+<!-- ========== TAB NHẬP ========== -->
+<div id="tab-input">
+  <div class="card">
+    <h3>Nhập list từ bằng text</h3>
+    <p class="hint">Mỗi dòng: <b>Hán tự | Pinyin | Nghĩa</b> (cách nhau dấu <b>|</b>, <b>Tab</b> hoặc <b>,</b>)</p>
+    <textarea id="inputArea" placeholder="旅游 | lǚyóu | Du lịch
+觉得 | juéde | Cảm thấy, cho rằng, nghĩ rằng
+最 | zuì | Nhất (chỉ mức độ cao nhất)"></textarea>
+    <div style="margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+      <button class="btn-primary" onclick="loadWords(false)">📥 Thay thế list bằng text</button>
+      <button class="btn-append" onclick="loadWords(true)">➕ Thêm list bằng text</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Nhập từ file Excel</h3>
+    <p class="hint">File cần 3 cột: <b>Hán tự | Pinyin | Nghĩa</b>. Hỗ trợ .xlsx, .xls, .csv</p>
+    <div style="margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+      <label class="file-label btn-primary">
+        📂 Nhập Excel (thay thế list)
+        <input type="file" id="excelReplace" accept=".xlsx,.xls,.csv" style="display:none;" onchange="loadExcel(event, false)">
+      </label>
+      <label class="file-label btn-append">
+        📂➕ Nhập Excel (thêm từ mới)
+        <input type="file" id="excelAppend" accept=".xlsx,.xls,.csv" style="display:none;" onchange="loadExcel(event, true)">
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+      <button class="btn-ghost" onclick="clearWords()">🗑 Xóa hết</button>
+      <button class="btn-ghost" onclick="restoreDefaults()">↩️ Khôi phục list HSK 2 mặc định</button>
+      <span id="countInfo" style="color: #666;"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ========== TAB HỌC ========== -->
+<div id="tab-quiz" class="hidden">
+  <div class="card">
+    <div class="tabs">
+      <button data-mode="hanzi" class="active" onclick="setMode('hanzi')">Điền Hán tự</button>
+      <button data-mode="pinyin" onclick="setMode('pinyin')">Điền Pinyin</button>
+      <button data-mode="meaning" onclick="setMode('meaning')">Điền Nghĩa</button>
+      <button data-mode="wrong" onclick="setMode('wrong')" style="background:#f39c12; color:white;">🔥 Ôn từ sai</button>
+    </div>
+    <div style="text-align: center; margin-bottom: 12px;">
+      <button id="typeHanziBtn" class="btn-toggle" onclick="toggleType('hanzi')">⌨️ Gõ Hán tự (hiện Nghĩa)</button>
+      <button id="typePinyinBtn" class="btn-toggle" onclick="toggleType('pinyin')">⌨️ Gõ Pinyin (hiện Hán tự + Nghĩa)</button>
+    </div>
+    <div class="stats">
+      <span>✅ Đúng: <b id="correctCount">0</b></span>
+      <span>❌ Sai: <b id="wrongCount">0</b></span>
+      <span>📝 Tổng: <b id="totalCount">0</b></span>
+      <span>🔥 Từ sai: <b id="wrongPoolCount">0</b></span>
+    </div>
+    <div class="question">
+      <div class="prompt" id="promptText">—</div>
+      <div class="sub" id="subText"></div>
+    </div>
+    <div class="options" id="optionsBox"></div>
+    <div class="type-box hidden" id="typeBox">
+      <input type="text" id="typeInput" placeholder="Gõ đáp án rồi nhấn Enter..." onkeydown="if(event.key==='Enter') checkTyped()">
+      <button class="btn-primary" onclick="checkTyped()">Kiểm tra</button>
+    </div>
+    <div class="answer-reveal" id="answerReveal"></div>
+    <div style="text-align: center; margin-top: 16px;">
+      <button id="nextBtn" class="btn-next" onclick="nextQuestion()">⏭ Câu tiếp theo</button>
+      <button class="btn-ghost" onclick="resetStats()">🔄 Reset điểm</button>
+      <button class="btn-ghost" onclick="resetWrongPool()">🧹 Xóa từ sai</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== TAB XEM LIST ========== -->
+<div id="tab-list" class="hidden">
+  <div class="card">
+    <h3>Danh sách từ (<span id="listCount">0</span> từ)</h3>
+    <div style="max-height: 400px; overflow-y: auto;">
+      <table>
+        <thead><tr><th>Hán tự</th><th>Pinyin</th><th>Nghĩa</th></tr></thead>
+        <tbody id="wordTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div style="text-align: center; margin-top: 20px;">
+  <button class="btn-secondary" onclick="showTab('input')">📝 Nhập từ</button>
+  <button class="btn-secondary" onclick="showTab('quiz')">🎯 Học</button>
+  <button class="btn-secondary" onclick="showTab('list')">📋 Xem list</button>
+</div>
+
+<script>
+// ============================================================
+// LIST TỪ MẶC ĐỊNH HSK 2 — đã gộp từ file Excel, loại trùng
+// ============================================================
+const defaultWords = [
+  { hanzi: '旅游', pinyin: 'lǚyóu', meaning: 'Du lịch' },
+  { hanzi: '觉得', pinyin: 'juéde', meaning: 'Cảm thấy, cho rằng, nghĩ rằng' },
+  { hanzi: '最', pinyin: 'zuì', meaning: 'Nhất (chỉ mức độ cao nhất)' },
+  { hanzi: '为什么', pinyin: 'wèi shénme', meaning: 'Tại sao' },
+  { hanzi: '也', pinyin: 'yě', meaning: 'Cũng' },
+  { hanzi: '运动', pinyin: 'yùndòng', meaning: 'Môn thể thao / Tập thể dục' },
+  { hanzi: '踢足球', pinyin: 'tī zúqiú', meaning: 'Đá bóng' },
+  { hanzi: '一起', pinyin: 'yìqǐ', meaning: 'Cùng nhau' },
+  { hanzi: '要', pinyin: 'yào', meaning: 'Muốn, cần, sẽ' },
+  { hanzi: '新', pinyin: 'xīn', meaning: 'Mới' },
+  { hanzi: '它', pinyin: 'tā', meaning: 'Nó (chỉ động vật, đồ vật)' },
+  { hanzi: '眼睛', pinyin: 'yǎnjing', meaning: 'Đôi mắt' },
+  { hanzi: '足球', pinyin: 'zúqiú', meaning: 'Quả bóng đá' },
+  { hanzi: '椅子', pinyin: 'yǐzi', meaning: 'Cái ghế' },
+  { hanzi: '猫', pinyin: 'māo', meaning: 'Con mèo' },
+  { hanzi: '北京', pinyin: 'Běijīng', meaning: 'Bắc Kinh' },
+  { hanzi: '天气', pinyin: 'tiānqì', meaning: 'Thời tiết' },
+  { hanzi: '冷 / 热', pinyin: 'lěng / rè', meaning: 'Lạnh / Nóng' },
+  { hanzi: '九月', pinyin: 'jiǔ yuè', meaning: 'Tháng 9' },
+  { hanzi: '起床', pinyin: 'qǐ chuáng', meaning: 'Thức dậy' },
+  { hanzi: '跑步', pinyin: 'pǎo bù', meaning: 'Chạy bộ' },
+  { hanzi: '身体', pinyin: 'shēntǐ', meaning: 'Sức khỏe, cơ thể' },
+  { hanzi: '生病', pinyin: 'shēng bìng', meaning: 'Bị bệnh, bị ốm' },
+  { hanzi: '药', pinyin: 'yào', meaning: 'Thuốc' },
+  { hanzi: '出院', pinyin: 'chū yuàn', meaning: 'Xuất viện' },
+  { hanzi: '出', pinyin: 'chū', meaning: 'Ra, ra ngoài' },
+  { hanzi: '高', pinyin: 'gāo', meaning: 'Cao' },
+  { hanzi: '米', pinyin: 'mǐ', meaning: 'Mét (đơn vị đo)' },
+  { hanzi: '知道', pinyin: 'zhīdào', meaning: 'Biết' },
+  { hanzi: '休息', pinyin: 'xiūxi', meaning: 'Nghỉ ngơi' },
+  { hanzi: '忙', pinyin: 'máng', meaning: 'Bận' },
+  { hanzi: '时间', pinyin: 'shíjiān', meaning: 'Thời gian' },
+  { hanzi: '每', pinyin: 'měi', meaning: 'Mỗi' },
+  { hanzi: '早上', pinyin: 'zǎoshang', meaning: 'Buổi sáng' },
+  { hanzi: '住院', pinyin: 'zhùyuàn', meaning: 'Nhập viện' },
+  { hanzi: '医生 / 医院', pinyin: 'yīshēng / yīyuàn', meaning: 'Bác sĩ / Bệnh viện' },
+  { hanzi: '吃药', pinyin: 'chī yào', meaning: 'Uống thuốc' },
+  { hanzi: '身体好了', pinyin: 'shēntǐ hǎo le', meaning: 'Sức khỏe hồi phục / Đã khỏi bệnh' },
+  { hanzi: '胖 / 瘦', pinyin: 'pàng / shòu', meaning: 'Béo / Gầy' },
+  { hanzi: '多高', pinyin: 'duō gāo', meaning: 'Cao bao nhiêu' },
+  { hanzi: '睡觉', pinyin: 'shuì jiào', meaning: 'Đi ngủ' },
+  { hanzi: '手表', pinyin: 'shǒubiǎo', meaning: 'Đồng hồ đeo tay' },
+  { hanzi: '千', pinyin: 'qiān', meaning: 'Nghìn, ngàn' },
+  { hanzi: '报纸', pinyin: 'bàozhǐ', meaning: 'Tờ báo' },
+  { hanzi: '送', pinyin: 'sòng', meaning: 'Giao, đưa, tặng' },
+  { hanzi: '一下', pinyin: 'yíxià', meaning: 'Một chút, thử' },
+  { hanzi: '牛奶', pinyin: 'niúnǎi', meaning: 'Sữa bò' },
+  { hanzi: '房间', pinyin: 'fángjiān', meaning: 'Phòng, căn phòng' },
+  { hanzi: '丈夫', pinyin: 'zhàngfu', meaning: 'Chồng' },
+  { hanzi: '旁边', pinyin: 'pángbiān', meaning: 'Bên cạnh' },
+  { hanzi: '真', pinyin: 'zhēn', meaning: 'Thật, quá' },
+  { hanzi: '粉色', pinyin: 'fěnsè', meaning: 'Màu hồng' },
+  { hanzi: '颜色', pinyin: 'yánsè', meaning: 'Màu sắc' },
+  { hanzi: '左边', pinyin: 'zuǒbian', meaning: 'Bên trái' },
+  { hanzi: '红色', pinyin: 'hóngsè', meaning: 'Màu đỏ' },
+  { hanzi: '右边', pinyin: 'yòubian', meaning: 'Bên phải' },
+  { hanzi: '前边 / 后边', pinyin: 'qiánbian / hòubian', meaning: 'Bên trước / Bên sau' },
+  { hanzi: '黑色 / 白色', pinyin: 'hēisè / báisè', meaning: 'Màu đen / Màu trắng' },
+  { hanzi: '妻子', pinyin: 'qīzi', meaning: 'Vợ' },
+  { hanzi: '拿', pinyin: 'ná', meaning: 'Cầm, lấy' },
+  { hanzi: '杯子 / 笔 / 书', pinyin: 'bēizi / bǐ / shū', meaning: 'Cái cốc / Cây bút / Quyển sách' },
+  { hanzi: '钱 / 块', pinyin: 'qián / kuài', meaning: 'Tiền / Đồng (tệ)' },
+  { hanzi: '奶茶', pinyin: 'nǎichá', meaning: 'Trà sữa' },
+  { hanzi: '哪边 / 那边 / 这边', pinyin: 'nǎbiān / nàbiān / zhèbiān', meaning: 'Bên nào / Bên đó / Bên này' },
+  { hanzi: '生日', pinyin: 'shēngrì', meaning: 'Sinh nhật' },
+  { hanzi: '快乐', pinyin: 'kuàilè', meaning: 'Vui vẻ, hạnh phúc' },
+  { hanzi: '给', pinyin: 'gěi', meaning: 'Cho, đưa cho' },
+  { hanzi: '接', pinyin: 'jiē', meaning: 'Nhận, nghe, đón' },
+  { hanzi: '晚上', pinyin: 'wǎnshang', meaning: 'Buổi tối' },
+  { hanzi: '问', pinyin: 'wèn', meaning: 'Hỏi' },
+  { hanzi: '非常', pinyin: 'fēicháng', meaning: 'Rất, vô cùng' },
+  { hanzi: '开始', pinyin: 'kāishǐ', meaning: 'Bắt đầu' },
+  { hanzi: '已经', pinyin: 'yǐjīng', meaning: 'Đã' },
+  { hanzi: '长', pinyin: 'cháng', meaning: 'Dài, lâu' },
+  { hanzi: '两', pinyin: 'liǎng', meaning: 'Hai' },
+  { hanzi: '帮', pinyin: 'bāng', meaning: 'Giúp, giúp đỡ' },
+  { hanzi: '介绍', pinyin: 'jièshào', meaning: 'Giới thiệu' },
+  { hanzi: '电话 / 打电话', pinyin: 'diànhuà / dǎ diànhuà', meaning: 'Điện thoại / Gọi điện thoại' },
+  { hanzi: '看书', pinyin: 'kàn shū', meaning: 'Đọc sách' },
+  { hanzi: '工作', pinyin: 'gōngzuò', meaning: 'Công việc, làm việc' },
+  { hanzi: '儿子', pinyin: 'érzi', meaning: 'Con trai' },
+  { hanzi: '认识', pinyin: 'rènshi', meaning: 'Quen biết' },
+  { hanzi: '大学同学', pinyin: 'dàxué tóngxué', meaning: 'Bạn học đại học' },
+  { hanzi: '帮助', pinyin: 'bāngzhù', meaning: 'Giúp đỡ' },
+  { hanzi: '外面', pinyin: 'wàimian', meaning: 'Bên ngoài' },
+  { hanzi: '准备', pinyin: 'zhǔnbèi', meaning: 'Định, dự định, chuẩn bị' },
+  { hanzi: '就', pinyin: 'jiù', meaning: 'Thì, ngay' },
+  { hanzi: '鱼', pinyin: 'yú', meaning: 'Cá, món cá' },
+  { hanzi: '吧', pinyin: 'ba', meaning: 'Trợ từ (đề nghị, thương lượng)' },
+  { hanzi: '件', pinyin: 'jiàn', meaning: 'Lượng từ: Chiếc, cái' },
+  { hanzi: '还', pinyin: 'hái', meaning: 'Cũng, khá, còn' },
+  { hanzi: '可以', pinyin: 'kěyǐ', meaning: 'Được, tạm được' },
+  { hanzi: '不错', pinyin: 'búcuò', meaning: 'Khá tốt, tuyệt, không tệ' },
+  { hanzi: '考试', pinyin: 'kǎoshì', meaning: 'Cuộc thi, bài kiểm tra' },
+  { hanzi: '意思', pinyin: 'yìsi', meaning: 'Ý nghĩa, ý' },
+  { hanzi: '咖啡', pinyin: 'kāfēi', meaning: 'Cà phê' },
+  { hanzi: '对', pinyin: 'duì', meaning: 'Đối với, cho' },
+  { hanzi: '以后', pinyin: 'yǐhòu', meaning: 'Sau này, về sau' },
+  { hanzi: '衣服', pinyin: 'yīfu', meaning: 'Quần áo' },
+  { hanzi: '打球', pinyin: 'dǎ qiú', meaning: 'Chơi bóng / Đánh bóng' },
+  { hanzi: '饭馆 / 咖啡馆', pinyin: 'fànguǎn / kāfēiguǎn', meaning: 'Quán ăn / Quán cà phê' },
+  { hanzi: '商店 / 学校', pinyin: 'shāngdiàn / xuéxiào', meaning: 'Cửa hàng / Trường học' },
+  { hanzi: '有点儿', pinyin: 'yǒudiǎnr', meaning: 'Hơi... / Một chút...' },
+  { hanzi: '试 / 试试', pinyin: 'shì / shìshi', meaning: 'Thử / Thử một chút' },
+  { hanzi: '有意思', pinyin: 'yǒu yìsi', meaning: 'Thú vị, có ý nghĩa' },
+  { hanzi: '门', pinyin: 'mén', meaning: 'Cửa, cổng' },
+  { hanzi: '外', pinyin: 'wài', meaning: 'Bên ngoài' },
+  { hanzi: '自行车', pinyin: 'zìxíngchē', meaning: 'Xe đạp' },
+  { hanzi: '羊肉', pinyin: 'yángròu', meaning: 'Thịt dê, thịt cừu' },
+  { hanzi: '好吃', pinyin: 'hǎochī', meaning: 'Ngon (dùng cho món ăn)' },
+  { hanzi: '面条', pinyin: 'miàntiáo', meaning: 'Mì sợi' },
+  { hanzi: '打篮球', pinyin: 'dǎ lánqiú', meaning: 'Chơi bóng rổ' },
+  { hanzi: '经常', pinyin: 'jīngcháng', meaning: 'Thường xuyên' },
+  { hanzi: '公斤', pinyin: 'gōngjīn', meaning: 'Kilôgam' },
+  { hanzi: '姐姐', pinyin: 'jiějie', meaning: 'Chị gái' },
+  { hanzi: '游泳', pinyin: 'yóuyǒng', meaning: 'Bơi, bơi lội' },
+  { hanzi: '怎么', pinyin: 'zěnme', meaning: 'Sao, tại sao' },
+  { hanzi: '因为……所以……', pinyin: 'yīnwèi ... suǒyǐ ...', meaning: 'Bởi vì... cho nên...' },
+  { hanzi: '天天', pinyin: 'tiāntiān', meaning: 'Hàng ngày, ngày ngày' },
+  { hanzi: '门外', pinyin: 'mén wài', meaning: 'Bên ngoài cửa' },
+  { hanzi: '骑自行车', pinyin: 'qí zìxíngchē', meaning: 'Đi xe đạp' },
+  { hanzi: '鸡肉', pinyin: 'jīròu', meaning: 'Thịt gà' },
+  { hanzi: '面馆儿', pinyin: 'miànguǎnr', meaning: 'Quán mì' },
+  { hanzi: '教室', pinyin: 'jiàoshì', meaning: 'Lớp học' },
+  { hanzi: '机场', pinyin: 'jīchǎng', meaning: 'Sân bay' },
+  { hanzi: '路', pinyin: 'lù', meaning: 'Đường, lối đi' },
+  { hanzi: '离', pinyin: 'lí', meaning: 'Cách (chỉ khoảng cách)' },
+  { hanzi: '公司', pinyin: 'gōngsī', meaning: 'Công ty' },
+  { hanzi: '远', pinyin: 'yuǎn', meaning: 'Xa' },
+  { hanzi: '公共汽车', pinyin: 'gōnggòng qìchē', meaning: 'Xe buýt' },
+  { hanzi: '小时', pinyin: 'xiǎoshí', meaning: 'Giờ, tiếng đồng hồ' },
+  { hanzi: '慢', pinyin: 'màn', meaning: 'Chậm' },
+  { hanzi: '快', pinyin: 'kuài', meaning: 'Nhanh' },
+  { hanzi: '过', pinyin: 'guò', meaning: 'Ăn (mừng), trải qua' },
+  { hanzi: '走', pinyin: 'zǒu', meaning: 'Đi, đi bộ' },
+  { hanzi: '到', pinyin: 'dào', meaning: 'Đến, tới' },
+  { hanzi: '近', pinyin: 'jìn', meaning: 'Gần' },
+  { hanzi: '出租车 / 飞机', pinyin: 'chūzūchē / fēijī', meaning: 'Xe taxi / Máy bay' },
+  { hanzi: '坐 / 开车 / 走路', pinyin: 'zuò / kāi chē / zǒulù', meaning: 'Đi (xe) / Lái xe / Đi bộ' },
+  { hanzi: '分钟', pinyin: 'fēnzhōng', meaning: 'Phút' },
+  { hanzi: '进站 / 车站', pinyin: 'jìn zhàn / chēzhàn', meaning: 'Vào ga, trạm / Bến xe, nhà ga' },
+  { hanzi: '公园 / 公用电话', pinyin: 'gōngyuán / gōngyòng diànhuà', meaning: 'Công viên / Điện thoại công cộng' },
+  { hanzi: '再', pinyin: 'zài', meaning: 'Lại, nữa' },
+  { hanzi: '让', pinyin: 'ràng', meaning: 'Cho phép, bảo, để' },
+  { hanzi: '告诉', pinyin: 'gàosu', meaning: 'Nói cho biết, bảo' },
+  { hanzi: '等', pinyin: 'děng', meaning: 'Chờ, đợi' },
+  { hanzi: '找', pinyin: 'zhǎo', meaning: 'Tìm, tìm kiếm' },
+  { hanzi: '事情', pinyin: 'shìqing', meaning: 'Việc, sự việc, chuyện' },
+  { hanzi: '服务员', pinyin: 'fúwùyuán', meaning: 'Nhân viên phục vụ' },
+  { hanzi: '白', pinyin: 'bái', meaning: 'Trắng, màu trắng' },
+  { hanzi: '黑', pinyin: 'hēi', meaning: 'Đen, màu đen' },
+  { hanzi: '贵', pinyin: 'guì', meaning: 'Đắt, đắt đỏ' },
+  { hanzi: '便宜', pinyin: 'piányi', meaning: 'Rẻ' },
+  { hanzi: '白色 / 黑色', pinyin: 'báisè / hēisè', meaning: 'Màu trắng / Màu đen' },
+  { hanzi: '茶馆儿 / 电视机', pinyin: 'cháguǎnr / diànshìjī', meaning: 'Quán trà / Máy thu hình (tivi)' },
+  { hanzi: '房子', pinyin: 'fángzi', meaning: 'Căn nhà' },
+  { hanzi: '鸡蛋面', pinyin: 'jīdànmiàn', meaning: 'Mì trứng' },
+  { hanzi: '让 / 叫 / 请', pinyin: 'ràng / jiào / qǐng', meaning: 'Cho / Bảo / Mời' },
+  { hanzi: '等一下 / 等等', pinyin: 'děng yíxià / děngděng', meaning: 'Đợi một chút / Chờ tý' },
+  { hanzi: '题', pinyin: 'tí', meaning: 'Đề bài, câu hỏi, bài tập' },
+  { hanzi: '完', pinyin: 'wán', meaning: 'Xong, hết, hoàn thành' },
+  { hanzi: '跳舞', pinyin: 'tiào wǔ', meaning: 'Nhảy múa' },
+  { hanzi: '第一', pinyin: 'dì-yī', meaning: 'Thứ nhất, đầu tiên' },
+  { hanzi: '洗', pinyin: 'xǐ', meaning: 'Rửa, giặt' },
+  { hanzi: '错', pinyin: 'cuò', meaning: 'Sai, nhầm' },
+  { hanzi: '懂', pinyin: 'dǒng', meaning: 'Hiểu, nắm rõ' },
+  { hanzi: '从', pinyin: 'cóng', meaning: 'Từ (chỉ điểm khởi đầu)' },
+  { hanzi: '希望', pinyin: 'xīwàng', meaning: 'Hy vọng, mong muốn' },
+  { hanzi: '问题', pinyin: 'wèntí', meaning: 'Câu hỏi, vấn đề' },
+  { hanzi: '欢迎', pinyin: 'huānyíng', meaning: 'Hoan nghênh, chào đón' },
+  { hanzi: '上班', pinyin: 'shàngbān', meaning: 'Đi làm' },
+  { hanzi: '做完 / 听懂', pinyin: 'zuò wán / tīng dǒng', meaning: 'Làm xong / Nghe hiểu' },
+  { hanzi: '做错 / 写错', pinyin: 'zuò cuò / xiě cuò', meaning: 'Làm sai / Viết sai' },
+  { hanzi: '看见 / 听见', pinyin: 'kàn jiàn / tīng jiàn', meaning: 'Nhìn thấy / Nghe thấy' },
+  { hanzi: '唱歌', pinyin: 'chàng gē', meaning: 'Hát' },
+  { hanzi: '洗衣服 / 洗手', pinyin: 'xǐ yīfu / xǐ shǒu', meaning: 'Giặt quần áo / Rửa tay' },
+  { hanzi: '从……到……', pinyin: 'cóng ... dào ...', meaning: 'Từ... đến...' },
+  { hanzi: '没问题', pinyin: 'méi wèntí', meaning: 'Không có vấn đề gì' },
+  { hanzi: '课', pinyin: 'kè', meaning: 'Bài học, tiết học' },
+  { hanzi: '别', pinyin: 'bié', meaning: 'Đừng, không nên' },
+  { hanzi: '哥哥', pinyin: 'gēge', meaning: 'Anh trai' },
+  { hanzi: '鸡蛋', pinyin: 'jīdàn', meaning: 'Trứng gà' },
+  { hanzi: '西瓜', pinyin: 'xīguā', meaning: 'Dưa hấu' },
+  { hanzi: '正在', pinyin: 'zhèngzài', meaning: 'Đang (chỉ hành động đang diễn ra)' },
+  { hanzi: '手机', pinyin: 'shǒujī', meaning: 'Điện thoại di động' },
+  { hanzi: '电脑 / 桌子', pinyin: 'diànnǎo / zhuōzi', meaning: 'Máy tính / Cái bàn' },
+  { hanzi: '看电视 / 玩儿电脑', pinyin: 'kàn diànshì / wánr diànnǎo', meaning: 'Xem tivi / Chơi máy tính' },
+  { hanzi: '别……了', pinyin: 'bié ... le', meaning: 'Đừng... nữa' },
+  { hanzi: '游泳馆 / 早饭', pinyin: 'yóuyǒngguǎn / zǎofàn', meaning: 'Bể bơi / Bữa sáng' },
+  { hanzi: '男 / 女', pinyin: 'nán / nǚ', meaning: 'Nam / Nữ' },
+  { hanzi: '孩子', pinyin: 'háizi', meaning: 'Con cái, đứa trẻ' },
+  { hanzi: '比', pinyin: 'bǐ', meaning: 'So với (cấu trúc so sánh)' },
+  { hanzi: '说话', pinyin: 'shuōhuà', meaning: 'Nói chuyện' },
+  { hanzi: '可能', pinyin: 'kěnéng', meaning: 'Có thể, có lẽ' },
+  { hanzi: '去年', pinyin: 'qùnián', meaning: 'Năm ngoái' },
+  { hanzi: '姓', pinyin: 'xìng', meaning: 'Mang họ, họ' },
+  { hanzi: '苹果', pinyin: 'píngguǒ', meaning: 'Quả táo' },
+  { hanzi: '听歌', pinyin: 'tīng gē', meaning: 'Nghe nhạc' },
+  { hanzi: '女孩儿', pinyin: 'nǚháir', meaning: 'Bé gái, cô gái' },
+  { hanzi: '伴', pinyin: 'bàn', meaning: 'Bạn đồng hành' },
+  { hanzi: '雪', pinyin: 'xuě', meaning: 'Tuyết' },
+  { hanzi: '零', pinyin: 'líng', meaning: 'Số 0' },
+  { hanzi: '度', pinyin: 'dù', meaning: 'Độ (đơn vị nhiệt độ)' },
+  { hanzi: '穿', pinyin: 'chuān', meaning: 'Mặc (quần áo, đi giày)' },
+  { hanzi: '进', pinyin: 'jìn', meaning: 'Vào, tiến vào' },
+  { hanzi: '弟弟', pinyin: 'dìdi', meaning: 'Em trai' },
+  { hanzi: '穿衣服', pinyin: 'chuān yīfu', meaning: 'Mặc quần áo' },
+  { hanzi: '下雪', pinyin: 'xià xuě', meaning: 'Tuyết rơi' },
+  { hanzi: '着', pinyin: 'zhe', meaning: 'Trợ từ: Chỉ trạng thái đang tiếp diễn' },
+  { hanzi: '手', pinyin: 'shǒu', meaning: 'Bàn tay' },
+  { hanzi: '铅笔', pinyin: 'qiānbǐ', meaning: 'Bút chì' },
+  { hanzi: '班', pinyin: 'bān', meaning: 'Lớp học, ca làm việc' },
+  { hanzi: '长', pinyin: 'zhǎng', meaning: 'Lớn lên, mọc, sinh ra' },
+  { hanzi: '笑', pinyin: 'xiào', meaning: 'Cười' },
+  { hanzi: '宾馆', pinyin: 'bīnguǎn', meaning: 'Khách sạn' },
+  { hanzi: '一直', pinyin: 'yìzhí', meaning: 'Thẳng, luôn luôn' },
+  { hanzi: '往', pinyin: 'wǎng', meaning: 'Hướng về, đi về phía' },
+  { hanzi: '路口', pinyin: 'lùkǒu', meaning: 'Ngã tư, giao lộ' },
+  { hanzi: '杨笑笑', pinyin: 'Yáng Xiàoxiao', meaning: 'Dương Tiếu Tiếu (tên riêng)' },
+  { hanzi: '拿着', pinyin: 'názhe', meaning: 'Đang cầm, đang giữ' },
+  { hanzi: '前女友', pinyin: 'qián nǚyóu', meaning: 'Bạn gái cũ' },
+  { hanzi: '但是', pinyin: 'dànshì', meaning: 'Nhưng, thế nhưng' },
+  { hanzi: '虽然', pinyin: 'suīrán', meaning: 'Mặc dù, tuy rằng' },
+  { hanzi: '次', pinyin: 'cì', meaning: 'Lần (bổ ngữ tần suất)' },
+  { hanzi: '玩儿', pinyin: 'wánr', meaning: 'Chơi' },
+  { hanzi: '晴', pinyin: 'qíng', meaning: 'Nắng, trời quang' },
+  { hanzi: '百', pinyin: 'bǎi', meaning: 'Trăm' },
+  { hanzi: '电影', pinyin: 'diànyǐng', meaning: 'Phim điện ảnh' },
+  { hanzi: '游过', pinyin: 'yóuguò', meaning: 'Đã từng bơi' },
+  { hanzi: '日', pinyin: 'rì', meaning: 'Ngày, mặt trời' },
+  { hanzi: '新年', pinyin: 'xīnnián', meaning: 'Năm mới, Tết' },
+  { hanzi: '票', pinyin: 'piào', meaning: 'Vé' },
+  { hanzi: '火车站', pinyin: 'huǒchēzhàn', meaning: 'Ga tàu hỏa' },
+  { hanzi: '大家', pinyin: 'dàjiā', meaning: 'Mọi người' },
+  { hanzi: '更', pinyin: 'gèng', meaning: 'Càng, hơn nữa' },
+  { hanzi: '妹妹', pinyin: 'mèimei', meaning: 'Em gái' },
+  { hanzi: '阴', pinyin: 'yīn', meaning: 'Âm u, nhiều mây' },
+  { hanzi: '火车 / 汽车', pinyin: 'huǒchē / qìchē', meaning: 'Tàu hỏa / Xe ô tô' },
+  { hanzi: '旅馆', pinyin: 'lǚguǎn', meaning: 'Nhà trọ, khách sạn' }
+];
+
+// ==================== BIẾN TOÀN CỤC ====================
+let words = [];
+let wrongPool = [];
+let currentWord = null;
+let currentMode = 'hanzi';
+let typeMode = null;
+let correct = 0, wrong = 0, total = 0;
+let answered = false;
+let autoNextTimer = null;
+
+// ==================== KHỞI TẠO ====================
+function loadFromStorage() {
+  const saved = localStorage.getItem('zh_words');
+  if (saved) {
+    try { words = JSON.parse(saved); } catch(e) { words = []; }
+  }
+  if (words.length === 0 && defaultWords.length > 0) {
+    words = defaultWords.slice();
+    localStorage.setItem('zh_words', JSON.stringify(words));
+  }
+  const savedWrong = localStorage.getItem('zh_wrong');
+  if (savedWrong) { try { wrongPool = JSON.parse(savedWrong); } catch(e) { wrongPool = []; } }
+  const savedTypeMode = localStorage.getItem('zh_typemode');
+  if (savedTypeMode === 'hanzi' || savedTypeMode === 'pinyin') typeMode = savedTypeMode;
+  updateToggleButtons();
+  updateUI();
+}
+
+function saveAll() {
+  localStorage.setItem('zh_words', JSON.stringify(words));
+  localStorage.setItem('zh_wrong', JSON.stringify(wrongPool));
+}
+
+// ==================== NẠP TỪ TEXT ====================
+function loadWords(appendMode) {
+  const text = document.getElementById('inputArea').value.trim();
+  if (!text) { alert('Vui lòng nhập list từ vào ô text!'); return; }
+  const lines = text.split('\n').filter(l => l.trim());
+  const newWords = [];
+  for (const line of lines) {
+    let parts;
+    if (line.includes('\t')) parts = line.split('\t');
+    else if (line.includes('|')) parts = line.split('|');
+    else parts = line.split(',');
+    parts = parts.map(p => p.trim()).filter(p => p);
+    if (parts.length >= 3) newWords.push({ hanzi: parts[0], pinyin: parts[1], meaning: parts[2] });
+  }
+  if (newWords.length === 0) { alert('Không đọc được từ nào. Kiểm tra định dạng: Hán tự | Pinyin | Nghĩa'); return; }
+  applyNewWords(newWords, appendMode, 'text');
+}
+
+// ==================== NẠP EXCEL ====================
+function loadExcel(event, appendMode) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+      let startIdx = 0;
+      if (rows.length && /hán|hanzi|pinyin|nghĩa|meaning/i.test(String(rows[0][0] || ''))) startIdx = 1;
+      const newWords = [];
+      for (let i = startIdx; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r || !r[0]) continue;
+        const hanzi = String(r[0]).trim();
+        const pinyin = String(r[1] || '').trim();
+        const meaning = String(r[2] || '').trim();
+        if (hanzi && pinyin && meaning) newWords.push({ hanzi, pinyin, meaning });
+      }
+      if (newWords.length === 0) { alert('Không đọc được dữ liệu. Đảm bảo file có 3 cột: Hán tự | Pinyin | Nghĩa'); return; }
+      applyNewWords(newWords, appendMode, 'Excel');
+      event.target.value = '';
+    } catch (err) {
+      alert('Lỗi đọc file: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ==================== ÁP DỤNG LIST MỚI ====================
+function applyNewWords(newWords, appendMode, source) {
+  if (appendMode) {
+    const existing = new Set(words.map(w => w.hanzi + '|' + w.pinyin));
+    let added = 0, skipped = 0;
+    for (const w of newWords) {
+      const key = w.hanzi + '|' + w.pinyin;
+      if (existing.has(key)) { skipped++; continue; }
+      words.push(w);
+      existing.add(key);
+      added++;
+    }
+    saveAll();
+    updateUI();
+    alert('✅ Đã thêm ' + added + ' từ từ ' + source + '.' + (skipped ? '\nBỏ qua ' + skipped + ' từ trùng.' : ''));
+  } else {
+    if (!confirm('Thay thế toàn bộ list hiện tại (' + words.length + ' từ) bằng ' + newWords.length + ' từ mới?')) return;
+    words = newWords;
+    saveAll();
+    updateUI();
+    alert('✅ Đã thay thế bằng ' + words.length + ' từ!');
+  }
+  showTab('quiz');
+}
+
+function clearWords() {
+  if (confirm('Xóa hết list từ? (Có thể khôi phục list HSK 2 mặc định sau)')) {
+    words = [];
+    saveAll();
+    updateUI();
+  }
+}
+
+function restoreDefaults() {
+  if (!confirm('Khôi phục list HSK 2 mặc định? List hiện tại sẽ bị thay thế.')) return;
+  words = defaultWords.slice();
+  saveAll();
+  updateUI();
+  alert('↩️ Đã khôi phục ' + words.length + ' từ HSK 2.');
+}
+
+// ==================== CẬP NHẬT UI ====================
+function updateUI() {
+  document.getElementById('countInfo').textContent = words.length ? '(' + words.length + ' từ)' : '';
+  document.getElementById('listCount').textContent = words.length;
+  document.getElementById('wordTable').innerHTML = words.map(w =>
+    '<tr><td style="font-size:22px;">' + w.hanzi + '</td><td>' + w.pinyin + '</td><td>' + w.meaning + '</td></tr>'
+  ).join('');
+  document.getElementById('wrongPoolCount').textContent = wrongPool.length;
+  if (words.length > 0 && !currentWord) nextQuestion();
+}
+
+// ==================== TAB ====================
+function showTab(name) {
+  ['input','quiz','list'].forEach(t => {
+    document.getElementById('tab-' + t).classList.add('hidden');
+  });
+  document.getElementById('tab-' + name).classList.remove('hidden');
+  if (name === 'quiz' && !currentWord && words.length) nextQuestion();
+}
+
+// ==================== CHẾ ĐỘ HỌC ====================
+function setMode(mode) {
+  currentMode = mode;
+  typeMode = null;
+  localStorage.setItem('zh_typemode', '');
+  updateToggleButtons();
+  document.querySelectorAll('.tabs button').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  nextQuestion();
+}
+
+function toggleType(kind) {
+  if (typeMode === kind) {
+    typeMode = null;
+    localStorage.setItem('zh_typemode', '');
+  } else {
+    typeMode = kind;
+    localStorage.setItem('zh_typemode', kind);
+  }
+  updateToggleButtons();
+  document.getElementById('optionsBox').innerHTML = '';
+  document.getElementById('answerReveal').textContent = '';
+  nextQuestion();
+}
+
+function updateToggleButtons() {
+  const btnH = document.getElementById('typeHanziBtn');
+  const btnP = document.getElementById('typePinyinBtn');
+  btnH.classList.toggle('on', typeMode === 'hanzi');
+  btnP.classList.toggle('on', typeMode === 'pinyin');
+  btnH.textContent = typeMode === 'hanzi'
+    ? '⌨️ Đang gõ Hán tự (hiện Nghĩa) — bấm để tắt'
+    : '⌨️ Gõ Hán tự (hiện Nghĩa)';
+  btnP.textContent = typeMode === 'pinyin'
+    ? '⌨️ Đang gõ Pinyin (hiện Hán tự + Nghĩa) — bấm để tắt'
+    : '⌨️ Gõ Pinyin (hiện Hán tự + Nghĩa)';
+}
+
+function normalize(str, mode) {
+  let s = String(str).trim();
+  if (mode === 'pinyin') {
+    s = s.toLowerCase().replace(/\s+/g, '');
+    s = removeTones(s);
+  } else if (mode === 'meaning') {
+    s = s.toLowerCase().replace(/\s+/g, ' ').trim();
+  } else {
+    s = s.replace(/\s+/g, '');
+  }
+  return s;
+}
+
+function removeTones(s) {
+  const map = {
+    'ā':'a','á':'a','ǎ':'a','à':'a','ē':'e','é':'e','ě':'e','è':'e',
+    'ī':'i','í':'i','ǐ':'i','ì':'i','ō':'o','ó':'o','ǒ':'o','ò':'o',
+    'ū':'u','ú':'u','ǔ':'u','ù':'u','ǖ':'v','ǘ':'v','ǚ':'v','ǜ':'v',
+    'ü':'v'
+  };
+  return s.replace(/[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü]/g, ch => map[ch] || ch);
+}
+
+function setNextButtonEnabled(enabled) {
+  document.getElementById('nextBtn').classList.toggle('highlight', enabled);
+}
+
+function cancelAutoNext() {
+  if (autoNextTimer) { clearTimeout(autoNextTimer); autoNextTimer = null; }
+}
+
+// ==================== TẠO CÂU HỎI ====================
+function nextQuestion() {
+  cancelAutoNext();
+  setNextButtonEnabled(false);
+
+  let pool = words;
+  if (currentMode === 'wrong' && !typeMode) {
+    if (wrongPool.length === 0) {
+      document.getElementById('promptText').textContent = '🎉 Không có từ sai!';
+      document.getElementById('subText').textContent = 'Hãy học thêm để tạo danh sách từ sai.';
+      document.getElementById('optionsBox').innerHTML = '';
+      document.getElementById('optionsBox').classList.add('hidden');
+      document.getElementById('typeBox').classList.add('hidden');
+      document.getElementById('answerReveal').textContent = '';
+      return;
+    }
+    pool = wrongPool;
+  }
+  if (pool.length === 0) {
+    document.getElementById('promptText').textContent = 'Chưa có từ nào';
+    document.getElementById('subText').textContent = 'Hãy nhập list từ trước';
+    document.getElementById('optionsBox').innerHTML = '';
+    document.getElementById('optionsBox').classList.add('hidden');
+    document.getElementById('typeBox').classList.add('hidden');
+    document.getElementById('answerReveal').textContent = '';
+    return;
+  }
+
+  answered = false;
+  currentWord = pool[Math.floor(Math.random() * pool.length)];
+
+  const promptEl = document.getElementById('promptText');
+  const subEl = document.getElementById('subText');
+  document.getElementById('answerReveal').textContent = '';
+
+  const optionsBox = document.getElementById('optionsBox');
+  const typeBox = document.getElementById('typeBox');
+  const input = document.getElementById('typeInput');
+
+  if (typeMode === 'hanzi') {
+    promptEl.textContent = currentWord.meaning;
+    subEl.textContent = '';
+    optionsBox.innerHTML = '';
+    optionsBox.classList.add('hidden');
+    typeBox.classList.remove('hidden');
+    input.value = '';
+    input.classList.remove('correct', 'wrong');
+    input.disabled = false;
+    setTimeout(() => input.focus(), 50);
+    return;
+  }
+
+  if (typeMode === 'pinyin') {
+    promptEl.textContent = currentWord.hanzi;
+    subEl.textContent = currentWord.meaning;
+    optionsBox.innerHTML = '';
+    optionsBox.classList.add('hidden');
+    typeBox.classList.remove('hidden');
+    input.value = '';
+    input.classList.remove('correct', 'wrong');
+    input.disabled = false;
+    setTimeout(() => input.focus(), 50);
+    return;
+  }
+
+  typeBox.classList.add('hidden');
+  input.value = '';
+  input.classList.remove('correct', 'wrong');
+
+  const effectiveMode = currentMode === 'wrong' ? 'hanzi' : currentMode;
+
+  if (effectiveMode === 'hanzi') {
+    promptEl.textContent = currentWord.pinyin;
+    subEl.textContent = currentWord.meaning;
+  } else if (effectiveMode === 'pinyin') {
+    promptEl.textContent = currentWord.hanzi;
+    subEl.textContent = currentWord.meaning;
+  } else {
+    promptEl.textContent = currentWord.hanzi;
+    subEl.textContent = currentWord.pinyin;
+  }
+
+  const key = effectiveMode === 'hanzi' ? 'hanzi' : effectiveMode === 'pinyin' ? 'pinyin' : 'meaning';
+  const correctAns = currentWord[key];
+
+  optionsBox.classList.remove('hidden');
+  optionsBox.innerHTML = '';
+
+  const poolAll = words.filter(w => w[key] !== correctAns);
+  const shuffled = poolAll.sort(() => Math.random() - 0.5).slice(0, 3);
+  const options = [correctAns, ...shuffled.map(w => w[key])].sort(() => Math.random() - 0.5);
+
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.textContent = opt;
+    btn.onclick = () => checkAnswer(btn, opt, correctAns);
+    optionsBox.appendChild(btn);
+  });
+}
+
+// ==================== KIỂM TRA TRẮC NGHIỆM ====================
+function checkAnswer(btn, chosen, correctAns) {
+  if (answered) return;
+  answered = true;
+  total++;
+
+  const allBtns = document.querySelectorAll('#optionsBox button');
+  allBtns.forEach(b => {
+    if (b.textContent === correctAns) b.classList.add('correct');
+  });
+
+  if (chosen === correctAns) {
+    correct++;
+    updateStats();
+    autoNextTimer = setTimeout(() => nextQuestion(), 800);
+  } else {
+    wrong++;
+    btn.classList.add('wrong');
+    addToWrongPool();
+    updateStats();
+    setNextButtonEnabled(true);
+  }
+}
+
+// ==================== KIỂM TRA GÕ ĐÁP ÁN ====================
+function checkTyped() {
+  if (answered) return;
+  const input = document.getElementById('typeInput');
+  const userAns = input.value;
+  if (!userAns.trim()) return;
+
+  let key, correctAns;
+  if (typeMode === 'hanzi') {
+    key = 'hanzi';
+    correctAns = currentWord.hanzi;
+  } else if (typeMode === 'pinyin') {
+    key = 'pinyin';
+    correctAns = currentWord.pinyin;
+  } else {
+    return;
+  }
+
+  answered = true;
+  total++;
+
+  const isCorrect = normalize(userAns, key) === normalize(correctAns, key);
+
+  input.disabled = true;
+  if (isCorrect) {
+    correct++;
+    input.classList.add('correct');
+    document.getElementById('answerReveal').textContent = '✅ Chính xác!';
+    updateStats();
+    autoNextTimer = setTimeout(() => nextQuestion(), 800);
+  } else {
+    wrong++;
+    input.classList.add('wrong');
+    document.getElementById('answerReveal').textContent = '❌ Sai. Đáp án đúng: ' + correctAns;
+    addToWrongPool();
+    updateStats();
+    setNextButtonEnabled(true);
+  }
+}
+
+// ==================== HÀM PHỤ ====================
+function addToWrongPool() {
+  if (!wrongPool.some(w => w.hanzi === currentWord.hanzi && w.pinyin === currentWord.pinyin)) {
+    wrongPool.push({ hanzi: currentWord.hanzi, pinyin: currentWord.pinyin, meaning: currentWord.meaning });
+    document.getElementById('wrongPoolCount').textContent = wrongPool.length;
+    saveAll();
+  }
+}
+
+function updateStats() {
+  document.getElementById('correctCount').textContent = correct;
+  document.getElementById('wrongCount').textContent = wrong;
+  document.getElementById('totalCount').textContent = total;
+}
+
+function resetStats() {
+  correct = 0; wrong = 0; total = 0;
+  updateStats();
+}
+
+function resetWrongPool() {
+  if (confirm('Xóa toàn bộ danh sách từ sai?')) {
+    wrongPool = [];
+    saveAll();
+    document.getElementById('wrongPoolCount').textContent = 0;
+  }
+}
+
+// ==================== KHỞI ĐỘNG ====================
+loadFromStorage();
+</script>
+
+</body>
+</html>
